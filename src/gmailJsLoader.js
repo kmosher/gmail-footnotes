@@ -12,6 +12,7 @@
 
 const GmailFactory = require("gmail-js");
 const jQuery = require("jquery");
+//const bootsrap = require("bootstrap");
 
 // don't mess up too bad if we have several gmail.js-based
 // extensions loaded at the same time!
