@@ -1,0 +1,15 @@
+span.footnote {
+  position: relative;
+  top: -0.4em;
+  color: #24B1E6;
+  font-size: 80%;
+}
+
+.tooltip-inner {
+/*    max-width: 100% !important; */
+  max-width: 500px !important;
+}
+
+.tooltip-inner a {
+  color: rgb(0, 123, 255) !important;
+}

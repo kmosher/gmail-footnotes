@@ -1,63 +1,89 @@
 "use strict";
 
-// loader-code: wait until gmailjs has finished loading, before triggering actual extensiode-code.
-const loaderId = setInterval(() => {
-    if (!window._gmailjs) {
-        return;
+const footnoteRE = /^\[\d+\]/;
+const footnoteTimeout = 200;
+
+function findFootnotes(pars) {
+  var footnotes = {};
+  for (var par of pars) {
+    var match = par.innerText.match(footnoteRE);
+    if (match) {
+      footnotes[match[0]] = par.innerHTML;
     }
+  }
+  return footnotes;
+}
 
-    clearInterval(loaderId);
-    startExtension(window._gmailjs);
-}, 100);
-
-const footnote_re = /^\[\d+\]/;
-
-function find_footnotes(pars) {
-    var par;
-    var footnotes = {};
-    for (par of pars) {
-	var match = par.innerText.match(footnote_re);
-	if (match) {
-	    footnotes[match[0]] = match["input"];
-	}
+function decorateFootnotes(pars, footnotes) {
+  for (var par of pars) {
+    var text = par.innerText;
+    if (text.search(footnoteRE) == -1) {
+      for (var fn in footnotes) {
+        if (text.includes(fn)) {
+          addHover(par, fn, footnotes[fn]);
+        }
+      }
     }
-    return footnotes;
+  }
 }
 
-function decorate_footnotes(pars, footnotes) {
-    var par;
-    for (par of pars) {
-	var text = par.innerText;
-	if (text.search(footnote_re) == -1) {
-	    for (fn in footnotes) {
-		if (text.includes(fn)) {
-		    add_hover(par, fn, footnotes[fn]);
-		}
-	    }
-	}
-    }
+function addHover(par, footNum, footnote) {
+  var tag = document.createElement("span");
+  tag.className = "footnote";
+  tag.setAttribute("data-toggle", "tooltip");
+  tag.setAttribute("title", footnote.split(footNum)[1]);
+  tag.innerText = footNum.match(/\d+/)[0];
+  var text = par.innerHTML.split(footNum);
+  par.innerHTML = text[0] + tag.outerHTML + text[1];
+  //    par.style.color = 'green';
 }
 
-function add_hover(par, foot_num, footnote) {
-    var tag = document.createElement("span");
-    tag.className = "footnote";
-//    tag.setAttribute("data-toggle", "tooltip");
-    tag.setAttribute("title", footnote.split(foot_num)[1]);
-    tag.innerText = foot_num;
-    var text = par.innerHTML.split(foot_num);
-    par.innerHTML = text[0] + tag.outerHTML + text[1];
-//    par.style.color = 'green';
+function onEmailView() {
+  console.log("Paragraphs changed");
+  var pars = document.getElementsByTagName("p");
+  var footnotes = findFootnotes(pars);
+  decorateFootnotes(pars, footnotes);
+  enableFootnotes();
 }
 
-function onEmailView(obj) {
-    var pars = obj.dom('body').find("p");
-    var footnotes = find_footnotes(pars);
-    decorate_footnotes(pars, footnotes);
+function enableFootnotes() {
+    $('[data-toggle="tooltip"]').each(
+    function() {
+      var $elem = $(this);
+      $elem.tooltip({
+        html: true,
+//        placement: "auto",
+        trigger: "manual",
+//        trigger: "manual click focus", //"click hover focus",
+        container: this.parentElement,
+        viewport: this.parentElement,
+        boundary: this.parentElement
+      }).on('mouseenter', function() {
+        clearTimeout(window.tooltipTimeout);
+        if($('.tooltip:visible').length == 0) {
+          $(this).tooltip('show')
+        }
+      }).on('mouseleave', function() {
+        var _this = this;
+        window.tooltipTimeout = setTimeout(function() {
+          $(_this).tooltip('hide')
+        }, footnoteTimeout)
+      });
+  });
 }
 
-// actual extension-code
-function startExtension(gmail) {
-    window.gmail = gmail;
-    gmail.observe.on("view_email", (email) => {
-	setTimeout(() => {onEmailView(email)}, 1000)})
-}
+$(document).on('mouseenter', '.tooltip', function() {
+  clearTimeout(window.tooltipTimeout)
+});
+
+$(document).on('mouseleave', '.tooltip', function() {
+  var trigger = $(this).siblings('.footnote')[0];
+  window.tooltipTimeout = setTimeout(function() {
+    $(trigger).tooltip('hide')}
+  , footnoteTimeout)
+});
+
+var observer = new MutationSummary({
+  callback: onEmailView,
+  queries: [{ element: 'p' }]
+});

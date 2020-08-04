@@ -1,28 +1,30 @@
 {
-    "manifest_version": 2,
-    "name": "Gmail Hover Footnotes",
-    "short_name": "gmail-hover-footnotes",
-    "version": "1.0",
-    "author": "Keith Mosher <keith.mosher@gmail.com>",
+  "manifest_version": 2,
+  "name": "Email Hover Footnotes",
+  "short_name": "Email-hover-footnotes",
+  "version": "1.0",
+  "author": "Keith Mosher",
 
-    "description": "A minimal extension which demonstrates how to create a extension with Gmail.JS and NodeJS-based bundling.",
+  "description": "Finds footnotes in emails and makes their contents appear when you hover over them. Currently only works with Gmail.",
 
-    "content_scripts": [
-        {
-            "matches": [ "*://mail.google.com/*" ],
-            "js": [
-                "src/extensionInjector.js"
-            ],
-            "run_at": "document_end"
-        }
-    ],
-
-    "web_accessible_resources": [
-        "dist/gmailJsLoader.js",
-        "dist/extension.js"
-    ],
-
-    "permissions": [
-        "https://*/*"
-    ]
+  "icons": {
+	  "16": "icons/icon-16.png",
+	  "48": "icons/icon-48.png",
+	  "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [ "*://mail.google.com/*" ],
+      "js": [
+        "vendor/jquery.min.js",
+        "vendor/mutation-summary.js",
+        "vendor/bootstrap/bootstrap.bundle.min.js",
+        "src/extension.js"
+      ],
+      "css": [
+        "vendor/bootstrap/bootstrap.min.css",
+        "src/extension.css"
+      ]
+    }
+  ]
 }
